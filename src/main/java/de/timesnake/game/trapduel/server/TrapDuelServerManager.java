@@ -1,0 +1,446 @@
+package de.timesnake.game.trapduel.server;
+
+import de.timesnake.basic.bukkit.util.Server;
+import de.timesnake.basic.bukkit.util.ServerManager;
+import de.timesnake.basic.bukkit.util.chat.ChatColor;
+import de.timesnake.basic.bukkit.util.exceptions.UnsupportedGroupRankException;
+import de.timesnake.basic.bukkit.util.user.User;
+import de.timesnake.basic.bukkit.util.user.scoreboard.Sideboard;
+import de.timesnake.basic.bukkit.util.world.ExLocation;
+import de.timesnake.basic.bukkit.util.world.ExWorld;
+import de.timesnake.basic.game.util.Game;
+import de.timesnake.basic.game.util.Map;
+import de.timesnake.basic.game.util.Team;
+import de.timesnake.basic.loungebridge.util.server.LoungeBridgeServer;
+import de.timesnake.basic.loungebridge.util.server.LoungeBridgeServerManager;
+import de.timesnake.basic.loungebridge.util.user.GameUser;
+import de.timesnake.basic.loungebridge.util.user.Kit;
+import de.timesnake.basic.loungebridge.util.user.KitNotDefinedException;
+import de.timesnake.database.util.game.DbGame;
+import de.timesnake.database.util.game.DbKit;
+import de.timesnake.database.util.game.DbMap;
+import de.timesnake.database.util.game.DbTeam;
+import de.timesnake.database.util.object.Status;
+import de.timesnake.game.trapduel.chat.Plugin;
+import de.timesnake.game.trapduel.main.GameTrapDuel;
+import de.timesnake.game.trapduel.user.TrapDuelUser;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.block.Biome;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.Vector;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+
+public class TrapDuelServerManager extends LoungeBridgeServerManager implements Listener {
+
+    public static TrapDuelServerManager getInstance() {
+        return (TrapDuelServerManager) ServerManager.getInstance();
+    }
+
+    private ArrayList<Location> userSpawnPoints = new ArrayList<>();
+
+    public static final String WORLD_NAME = "trapduel";
+
+    public static final List<Biome> BLOCKED_BIOMES = List.of(Biome.OCEAN, Biome.DEEP_OCEAN, Biome.DEEP_COLD_OCEAN, Biome.COLD_OCEAN, Biome.FROZEN_OCEAN, Biome.DEEP_FROZEN_OCEAN, Biome.DEEP_LUKEWARM_OCEAN, Biome.LUKEWARM_OCEAN, Biome.WARM_OCEAN);
+
+    public static final Integer SWITCH_PEACE = 60 * 3;
+    public static final Integer PEACE = 60 * 5;
+
+    private boolean isGameRunning = false;
+
+    private int countdownPeace;
+    private boolean countdownPeaceRunning = false;
+    private BukkitTask peaceTimeTask;
+
+    private boolean countdownSwitchRunning = false;
+    private BukkitTask switchTask;
+
+    private float timeMultiplier = 1;
+
+    private ExWorld gameWorld;
+
+    private boolean stopAfterStart = false;
+
+    @Override
+    public TrapDuelUser loadUser(Player player) {
+        return new TrapDuelUser(player);
+    }
+
+    public void onTrapDuelEnable() {
+        super.onLoungeBridgeEnable();
+
+        if (!this.areKitsEnabled()) {
+            timeMultiplier = 2;
+        }
+
+        this.gameWorld = Server.getWorldManager().getWorld(WORLD_NAME);
+        if (this.gameWorld != null) {
+            Server.getWorldManager().deleteWorld(this.gameWorld, true);
+        }
+        this.gameWorld = Server.getWorldManager().createWorld(WORLD_NAME);
+        Server.printText(Plugin.TRAP_DUEL, "Game world created");
+
+        this.generateUserSpawnPoints();
+    }
+
+    @Override
+    protected Game loadGame(DbGame dbGame, boolean loadWorlds) {
+        return new Game(dbGame, true) {
+            @Override
+            public Team loadTeam(DbTeam team) throws UnsupportedGroupRankException {
+                return new Team(team);
+            }
+
+            @Override
+            public Map loadMap(DbMap dbMap, boolean loadWorld) {
+                return new Map(dbMap, loadWorld);
+            }
+
+            @Override
+            public TrapDuelKit loadKit(DbKit dbKit) {
+                int dbId = dbKit.getId();
+                for (TrapDuelKit kit : TrapDuelKit.KITS) {
+                    if (kit.getId().equals(dbId)) {
+                        return kit;
+                    }
+                }
+                return null;
+            }
+        };
+    }
+
+
+    @Override
+    public void prepareGame() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                gameWorld.setTime(1000);
+            }
+        }.runTask(GameTrapDuel.getPlugin());
+    }
+
+    @Override
+    public void loadMap() {
+
+    }
+
+    @Override
+    public void startGame() {
+        this.isGameRunning = true;
+        if (this.stopAfterStart) {
+            this.stopWithWin();
+            return;
+        }
+
+        for (User user : Server.getInGameUsers()) {
+            user.setFlySpeed(1);
+            user.setGravity(true);
+            user.setFlying(false);
+            user.setAllowFlight(false);
+        }
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                for (User user : Server.getInGameUsers()) {
+                    Player p = user.getPlayer();
+                    p.setInvulnerable(false);
+                    user.sendPluginMessage(Plugin.TRAP_DUEL, ChatColor.WARNING + "You are now vulnerable!");
+                }
+            }
+        }.runTaskLaterAsynchronously(GameTrapDuel.getPlugin(), 10 * 20);
+        this.countdownPeace = (int) (PEACE * timeMultiplier);
+        this.startPeaceCountdown();
+    }
+
+    @Override
+    public void onGameUserQuit(GameUser user) {
+        Player p = user.getPlayer();
+        p.setInvulnerable(true);
+        user.setStatus(Status.User.OUT_GAME);
+        if (Server.getInGameUsers().size() <= 1) {
+            this.stopWithWin();
+        }
+    }
+
+    @Override
+    public void onGameUserQuitBeforeStart(GameUser user) {
+        this.stopAfterStart = true;
+    }
+
+    @Override
+    public boolean isRejoiningAllowed() {
+        return false;
+    }
+
+    public void startPeaceCountdown() {
+        if (!this.isCountdownPeaceRunning()) {
+            countdownPeaceRunning = true;
+
+            this.peaceTimeTask = new BukkitRunnable() {
+                @Override
+                public void run() {
+                    switch (countdownPeace) {
+                        case 120:
+                        case 180:
+                        case 300:
+                        case 600:
+                            broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends in " + ChatColor.VALUE + countdownPeace / 60 + ChatColor.PUBLIC + " minutes!");
+                            break;
+                        case 60:
+                            broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends in " + ChatColor.VALUE + "1" + ChatColor.PUBLIC + " minute!");
+                            break;
+                        case 1:
+                            broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends in " + ChatColor.VALUE + "1" + ChatColor.PUBLIC + " second!");
+                            break;
+                        case 0:
+                            broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends " + ChatColor.VALUE + "now!");
+                            broadcastGameMessage(ChatColor.WARNING + "The Switch-Time begins!");
+                            broadcastGameMessage(ChatColor.WARNING + "Be attentive and prepared!");
+
+                            startSwitchCountdown();
+                            countdownPeaceRunning = false;
+                            this.cancel();
+                            break;
+                        default:
+                            if (countdownPeace <= 10 || countdownPeace == 30) {
+                                broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends in " + ChatColor.VALUE + countdownPeace + ChatColor.PUBLIC + " seconds!");
+                            }
+
+                    }
+                    countdownPeace--;
+                }
+            }.runTaskTimerAsynchronously(GameTrapDuel.getPlugin(), 0, 20);
+        }
+    }
+
+    public void startSwitchCountdown() {
+        if (!this.isCountdownSwitchRunning()) {
+            countdownSwitchRunning = true;
+
+            this.switchTask = new BukkitRunnable() {
+
+                @Override
+                public void run() {
+                    List<User> users = new ArrayList<>(Server.getInGameUsers());
+                    Collections.shuffle(users);
+
+                    Location firstLocation = users.get(0).getLocation();
+
+                    for (int i = 0; i < users.size(); i++) {
+                        User user = users.get(i);
+
+                        Vector vec = user.getPlayer().getVelocity();
+                        boolean isSneaking = user.getPlayer().isSneaking();
+                        boolean isSwimming = user.getPlayer().isSwimming();
+
+                        //last user
+                        if (user.equals(users.get(users.size() - 1))) {
+                            firstLocation.getChunk().load(true);
+                            firstLocation.getChunk().setForceLoaded(true);
+                            user.teleport(firstLocation);
+                        } else {
+                            User toTp = users.get(i + 1);
+                            toTp.getLocation().getChunk().load(true);
+                            toTp.getLocation().getChunk().setForceLoaded(true);
+                            user.teleport(toTp);
+
+                        }
+
+                        user.getPlayer().setVelocity(vec);
+                        user.getPlayer().setSneaking(isSneaking);
+                        user.getPlayer().setSwimming(isSwimming);
+                    }
+
+                    broadcastGameMessage(ChatColor.WARNING + "Switched!");
+                    countdownSwitchRunning = false;
+                    countdownPeace = SWITCH_PEACE;
+                    startPeaceCountdown();
+                    this.cancel();
+                }
+            }.runTaskLater(GameTrapDuel.getPlugin(), 20L * this.getNewSwitchCountdown());
+
+        }
+    }
+
+    @Override
+    public void resetGame() {
+        Server.getWorldManager().deleteWorld(this.gameWorld, true);
+        this.gameWorld = Server.getWorldManager().createWorld(WORLD_NAME);
+
+        this.generateUserSpawnPoints();
+
+        countdownPeaceRunning = false;
+        countdownSwitchRunning = false;
+        this.stopAfterStart = false;
+
+        Server.printText(Plugin.TRAP_DUEL, "Reset successfully");
+    }
+
+    @Override
+    public Sideboard getSpectatorSideboard() {
+        return null;
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent e) {
+        Player p = e.getEntity();
+        User user = Server.getUser(p);
+        if (Server.getInGameUsers().contains(user)) {
+            e.setDeathMessage("");
+            this.broadcastGameMessage(user.getChatName() + ChatColor.WHITE + " died");
+            Server.runTaskLaterSynchrony(() -> e.getEntity().spigot().respawn(), 2, GameTrapDuel.getPlugin());
+
+            ((TrapDuelUser) user).joinSpectator();
+
+            if (Server.getInGameUsers().size() <= 1) {
+                this.stopWithWin();
+            }
+        } else {
+            e.setDeathMessage("");
+        }
+    }
+
+    @Override
+    public Kit getKit(int index) throws KitNotDefinedException {
+        for (TrapDuelKit kit : TrapDuelKit.KITS) {
+            if (kit.getId().equals(index)) {
+                return kit;
+            }
+        }
+        throw new KitNotDefinedException(index);
+    }
+
+    public int getNewSwitchCountdown() {
+        return (int) (50 * getGaussian() * timeMultiplier + 10);
+    }
+
+    public double getGaussian() {
+        double u = 0, v = 0;
+        while (u == 0) u = Math.random(); //Converting [0,1) to (0,1)
+        while (v == 0) v = Math.random();
+        double num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+
+        num = num / 10.0 + 0.5; // Translate to 0 -> 1
+        if (num > 1 || num < 0) num = getGaussian(); // resample between 0 and 1 if out of range
+        return num;
+    }
+
+
+    @EventHandler
+    public void onPlayerRespawn(PlayerRespawnEvent e) {
+        User user = Server.getUser(e.getPlayer());
+
+        if (user == null) {
+            return;
+        }
+
+        if (user.getStatus().equals(Status.User.OUT_GAME)) {
+            e.setRespawnLocation(user.getLocation());
+        }
+    }
+
+    @EventHandler
+    public void onEntityDamageByEntity(EntityDamageByEntityEvent e) {
+        if (e.getEntity() instanceof Player && e.getDamager() instanceof Player) {
+            e.setCancelled(true);
+
+        }
+    }
+
+    @Override
+    public Kit[] getKits() {
+        return TrapDuelKit.KITS;
+    }
+
+
+    public void generateUserSpawnPoints() {
+        userSpawnPoints = new ArrayList<>();
+        int maxPlayers = Server.getMaxPlayers();
+
+        int spawnPoint = 2000;
+        while (userSpawnPoints.size() < maxPlayers) {
+            Location loc;
+            do {
+                loc = new ExLocation(gameWorld, spawnPoint, 255, spawnPoint);
+                spawnPoint += 2000;
+            } while (BLOCKED_BIOMES.contains(loc.getBlock().getBiome()));
+            userSpawnPoints.add(loc);
+            Server.printText(Plugin.TRAP_DUEL, "Added spawn: " + spawnPoint);
+        }
+    }
+
+    public Location getUserSpawnPoint() {
+        Location loc = userSpawnPoints.get(0);
+        userSpawnPoints.remove(loc);
+        return loc;
+    }
+
+    public int getCountdownPeace() {
+        return countdownPeace;
+    }
+
+    public boolean isCountdownPeaceRunning() {
+        return countdownPeaceRunning;
+    }
+
+    public boolean isCountdownSwitchRunning() {
+        return countdownSwitchRunning;
+    }
+
+    @Override
+    public void broadcastGameMessage(String message) {
+        Server.broadcastMessage(Plugin.TRAP_DUEL, message);
+    }
+
+    public void stopWithWin() {
+        if (isGameRunning) {
+            isGameRunning = false;
+            if (this.peaceTimeTask != null) {
+                this.peaceTimeTask.cancel();
+            }
+            if (this.switchTask != null) {
+                this.switchTask.cancel();
+            }
+            for (User user : Server.getInGameUsers()) {
+                user.getPlayer().setInvulnerable(true);
+                user.setGameMode(GameMode.ADVENTURE);
+            }
+            if (Server.getInGameUsers().size() == 1) {
+                User winner = Server.getInGameUsers().iterator().next();
+                this.broadcastGameMessage(Server.getChat().getLongLineSeparator());
+                this.broadcastGameMessage(winner.getChatName() + ChatColor.WHITE + " wins");
+                this.broadcastGameMessage(Server.getChat().getLongLineSeparator());
+
+                LoungeBridgeServer.closeGame();
+            }
+        }
+    }
+
+
+    @Override
+    public Plugin getGamePlugin() {
+        return Plugin.TRAP_DUEL;
+    }
+
+    @Override
+    public boolean isGameRunning() {
+        return this.isGameRunning;
+    }
+
+    @Override
+    public Location getSpectatorSpawn() {
+        return Server.getInGameUsers().iterator().hasNext() ? Server.getInGameUsers().iterator().next().getLocation() : null;
+    }
+}
