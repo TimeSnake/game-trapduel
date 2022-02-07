@@ -1,7 +1,0 @@
-main: de.timesnake.game.trapduel.main.GameTrapDuel
-version: 1.0
-name: game-trapduel
-author: Mn
-depend: [ basic-lounge-bridge ]
-api-version: 1.13
-
