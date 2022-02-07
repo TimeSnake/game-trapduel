@@ -24,6 +24,7 @@ import de.timesnake.database.util.object.Status;
 import de.timesnake.game.trapduel.chat.Plugin;
 import de.timesnake.game.trapduel.main.GameTrapDuel;
 import de.timesnake.game.trapduel.user.TrapDuelUser;
+import de.timesnake.library.extension.util.chat.Chat;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.block.Biome;
@@ -419,9 +420,9 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager implements 
             }
             if (Server.getInGameUsers().size() == 1) {
                 User winner = Server.getInGameUsers().iterator().next();
-                this.broadcastGameMessage(Server.getChat().getLongLineSeparator());
+                this.broadcastGameMessage(Chat.getLongLineSeparator());
                 this.broadcastGameMessage(winner.getChatName() + ChatColor.WHITE + " wins");
-                this.broadcastGameMessage(Server.getChat().getLongLineSeparator());
+                this.broadcastGameMessage(Chat.getLongLineSeparator());
 
                 LoungeBridgeServer.closeGame();
             }
