@@ -189,40 +189,37 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager implements 
         if (!this.isCountdownPeaceRunning()) {
             countdownPeaceRunning = true;
 
-            this.peaceTimeTask = new BukkitRunnable() {
-                @Override
-                public void run() {
-                    switch (countdownPeace) {
-                        case 120:
-                        case 180:
-                        case 300:
-                        case 600:
-                            broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends in " + ChatColor.VALUE + countdownPeace / 60 + ChatColor.PUBLIC + " minutes!");
-                            break;
-                        case 60:
-                            broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends in " + ChatColor.VALUE + "1" + ChatColor.PUBLIC + " minute!");
-                            break;
-                        case 1:
-                            broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends in " + ChatColor.VALUE + "1" + ChatColor.PUBLIC + " second!");
-                            break;
-                        case 0:
-                            broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends " + ChatColor.VALUE + "now!");
-                            broadcastGameMessage(ChatColor.WARNING + "The Switch-Time begins!");
-                            broadcastGameMessage(ChatColor.WARNING + "Be attentive and prepared!");
+            this.peaceTimeTask = Server.runTaskTimerAsynchrony(() -> {
+                switch (countdownPeace) {
+                    case 120:
+                    case 180:
+                    case 300:
+                    case 600:
+                        broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends in " + ChatColor.VALUE + countdownPeace / 60 + ChatColor.PUBLIC + " minutes!");
+                        break;
+                    case 60:
+                        broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends in " + ChatColor.VALUE + "1" + ChatColor.PUBLIC + " minute!");
+                        break;
+                    case 1:
+                        broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends in " + ChatColor.VALUE + "1" + ChatColor.PUBLIC + " second!");
+                        break;
+                    case 0:
+                        broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends " + ChatColor.VALUE + "now!");
+                        broadcastGameMessage(ChatColor.WARNING + "The Switch-Time begins!");
+                        broadcastGameMessage(ChatColor.WARNING + "Be attentive and prepared!");
 
-                            startSwitchCountdown();
-                            countdownPeaceRunning = false;
-                            this.cancel();
-                            break;
-                        default:
-                            if (countdownPeace <= 10 || countdownPeace == 30) {
-                                broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends in " + ChatColor.VALUE + countdownPeace + ChatColor.PUBLIC + " seconds!");
-                            }
+                        countdownPeaceRunning = false;
+                        this.peaceTimeTask.cancel();
+                        startSwitchCountdown();
+                        break;
+                    default:
+                        if (countdownPeace <= 10 || countdownPeace == 30) {
+                            broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends in " + ChatColor.VALUE + countdownPeace + ChatColor.PUBLIC + " seconds!");
+                        }
 
-                    }
-                    countdownPeace--;
                 }
-            }.runTaskTimerAsynchronously(GameTrapDuel.getPlugin(), 0, 20);
+                countdownPeace--;
+            }, 0, 20, GameTrapDuel.getPlugin());
         }
     }
 
@@ -230,47 +227,43 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager implements 
         if (!this.isCountdownSwitchRunning()) {
             countdownSwitchRunning = true;
 
-            this.switchTask = new BukkitRunnable() {
+            this.switchTask = Server.runTaskLaterSynchrony(() -> {
+                List<User> users = new ArrayList<>(Server.getInGameUsers());
+                Collections.shuffle(users);
 
-                @Override
-                public void run() {
-                    List<User> users = new ArrayList<>(Server.getInGameUsers());
-                    Collections.shuffle(users);
+                Location firstLocation = users.get(0).getLocation();
 
-                    Location firstLocation = users.get(0).getLocation();
+                for (int i = 0; i < users.size(); i++) {
+                    User user = users.get(i);
 
-                    for (int i = 0; i < users.size(); i++) {
-                        User user = users.get(i);
+                    Vector vec = user.getPlayer().getVelocity();
+                    boolean isSneaking = user.getPlayer().isSneaking();
+                    boolean isSwimming = user.getPlayer().isSwimming();
 
-                        Vector vec = user.getPlayer().getVelocity();
-                        boolean isSneaking = user.getPlayer().isSneaking();
-                        boolean isSwimming = user.getPlayer().isSwimming();
+                    //last user
+                    if (user.equals(users.get(users.size() - 1))) {
+                        firstLocation.getChunk().load(true);
+                        firstLocation.getChunk().setForceLoaded(true);
+                        user.teleport(firstLocation);
+                    } else {
+                        User toTp = users.get(i + 1);
+                        toTp.getLocation().getChunk().load(true);
+                        toTp.getLocation().getChunk().setForceLoaded(true);
+                        user.teleport(toTp);
 
-                        //last user
-                        if (user.equals(users.get(users.size() - 1))) {
-                            firstLocation.getChunk().load(true);
-                            firstLocation.getChunk().setForceLoaded(true);
-                            user.teleport(firstLocation);
-                        } else {
-                            User toTp = users.get(i + 1);
-                            toTp.getLocation().getChunk().load(true);
-                            toTp.getLocation().getChunk().setForceLoaded(true);
-                            user.teleport(toTp);
-
-                        }
-
-                        user.getPlayer().setVelocity(vec);
-                        user.getPlayer().setSneaking(isSneaking);
-                        user.getPlayer().setSwimming(isSwimming);
                     }
 
-                    broadcastGameMessage(ChatColor.WARNING + "Switched!");
-                    countdownSwitchRunning = false;
-                    countdownPeace = SWITCH_PEACE;
-                    startPeaceCountdown();
-                    this.cancel();
+                    user.getPlayer().setVelocity(vec);
+                    user.getPlayer().setSneaking(isSneaking);
+                    user.getPlayer().setSwimming(isSwimming);
                 }
-            }.runTaskLater(GameTrapDuel.getPlugin(), 20L * this.getNewSwitchCountdown());
+
+                broadcastGameMessage(ChatColor.WARNING + "Switched!");
+                countdownSwitchRunning = false;
+                countdownPeace = SWITCH_PEACE;
+                startPeaceCountdown();
+                this.switchTask.cancel();
+            }, 20 * this.getNewSwitchCountdown(), GameTrapDuel.getPlugin());
 
         }
     }
