@@ -53,7 +53,9 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager implements 
 
     public static final String WORLD_NAME = "trapduel";
 
-    public static final List<Biome> BLOCKED_BIOMES = List.of(Biome.OCEAN, Biome.DEEP_OCEAN, Biome.DEEP_COLD_OCEAN, Biome.COLD_OCEAN, Biome.FROZEN_OCEAN, Biome.DEEP_FROZEN_OCEAN, Biome.DEEP_LUKEWARM_OCEAN, Biome.LUKEWARM_OCEAN, Biome.WARM_OCEAN);
+    public static final List<Biome> BLOCKED_BIOMES = List.of(Biome.OCEAN, Biome.DEEP_OCEAN, Biome.DEEP_COLD_OCEAN,
+            Biome.COLD_OCEAN, Biome.FROZEN_OCEAN, Biome.DEEP_FROZEN_OCEAN, Biome.DEEP_LUKEWARM_OCEAN,
+            Biome.LUKEWARM_OCEAN, Biome.WARM_OCEAN);
 
     public static final Integer SWITCH_PEACE = 60 * 3;
     public static final Integer PEACE = 60 * 5;
@@ -435,6 +437,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager implements 
 
     @Override
     public Location getSpectatorSpawn() {
-        return Server.getInGameUsers().iterator().hasNext() ? Server.getInGameUsers().iterator().next().getLocation() : null;
+        return Server.getInGameUsers().iterator().hasNext() ?
+                Server.getInGameUsers().iterator().next().getLocation() : null;
     }
 }
