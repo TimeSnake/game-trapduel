@@ -45,21 +45,18 @@ import java.util.List;
 
 public class TrapDuelServerManager extends LoungeBridgeServerManager implements Listener {
 
+    public static final String WORLD_NAME = "trapduel";
+    public static final List<Biome> BLOCKED_BIOMES = List.of(Biome.OCEAN, Biome.DEEP_OCEAN, Biome.DEEP_COLD_OCEAN,
+            Biome.COLD_OCEAN, Biome.FROZEN_OCEAN, Biome.DEEP_FROZEN_OCEAN, Biome.DEEP_LUKEWARM_OCEAN,
+            Biome.LUKEWARM_OCEAN, Biome.WARM_OCEAN);
+    public static final Integer SWITCH_PEACE = 60 * 3;
+    public static final Integer PEACE = 60 * 5;
+
     public static TrapDuelServerManager getInstance() {
         return (TrapDuelServerManager) ServerManager.getInstance();
     }
 
     private ArrayList<Location> userSpawnPoints = new ArrayList<>();
-
-    public static final String WORLD_NAME = "trapduel";
-
-    public static final List<Biome> BLOCKED_BIOMES = List.of(Biome.OCEAN, Biome.DEEP_OCEAN, Biome.DEEP_COLD_OCEAN,
-            Biome.COLD_OCEAN, Biome.FROZEN_OCEAN, Biome.DEEP_FROZEN_OCEAN, Biome.DEEP_LUKEWARM_OCEAN,
-            Biome.LUKEWARM_OCEAN, Biome.WARM_OCEAN);
-
-    public static final Integer SWITCH_PEACE = 60 * 3;
-    public static final Integer PEACE = 60 * 5;
-
     private boolean isGameRunning = false;
 
     private int countdownPeace;
@@ -135,12 +132,12 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager implements 
     }
 
     @Override
-    public void loadMap() {
+    public void onMapLoad() {
 
     }
 
     @Override
-    public void startGame() {
+    public void onGameStart() {
         this.isGameRunning = true;
         if (this.stopAfterStart) {
             this.stopWithWin();
