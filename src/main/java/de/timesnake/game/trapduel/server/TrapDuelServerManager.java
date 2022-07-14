@@ -8,18 +8,15 @@ import de.timesnake.basic.bukkit.util.user.User;
 import de.timesnake.basic.bukkit.util.user.scoreboard.Sideboard;
 import de.timesnake.basic.bukkit.util.world.ExLocation;
 import de.timesnake.basic.bukkit.util.world.ExWorld;
-import de.timesnake.basic.game.util.Game;
 import de.timesnake.basic.game.util.Map;
 import de.timesnake.basic.game.util.Team;
+import de.timesnake.basic.game.util.TmpGame;
 import de.timesnake.basic.loungebridge.util.server.LoungeBridgeServer;
 import de.timesnake.basic.loungebridge.util.server.LoungeBridgeServerManager;
 import de.timesnake.basic.loungebridge.util.user.GameUser;
 import de.timesnake.basic.loungebridge.util.user.Kit;
 import de.timesnake.basic.loungebridge.util.user.KitNotDefinedException;
-import de.timesnake.database.util.game.DbGame;
-import de.timesnake.database.util.game.DbKit;
-import de.timesnake.database.util.game.DbMap;
-import de.timesnake.database.util.game.DbTeam;
+import de.timesnake.database.util.game.*;
 import de.timesnake.game.trapduel.chat.Plugin;
 import de.timesnake.game.trapduel.main.GameTrapDuel;
 import de.timesnake.game.trapduel.user.TrapDuelUser;
@@ -43,7 +40,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class TrapDuelServerManager extends LoungeBridgeServerManager implements Listener {
+public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> implements Listener {
 
     public static final String WORLD_NAME = "trapduel";
     public static final List<Biome> BLOCKED_BIOMES = List.of(Biome.OCEAN, Biome.DEEP_OCEAN, Biome.DEEP_COLD_OCEAN,
@@ -95,8 +92,8 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager implements 
     }
 
     @Override
-    protected Game loadGame(DbGame dbGame, boolean loadWorlds) {
-        return new Game(dbGame, true) {
+    protected TmpGame loadGame(DbGame dbGame, boolean loadWorlds) {
+        return new TmpGame((DbTmpGame) dbGame, true) {
             @Override
             public Team loadTeam(DbTeam team) throws UnsupportedGroupRankException {
                 return new Team(team);
