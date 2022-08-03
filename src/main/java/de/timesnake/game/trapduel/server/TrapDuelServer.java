@@ -5,12 +5,9 @@ import org.bukkit.Location;
 
 public class TrapDuelServer extends LoungeBridgeServer {
 
-    private static final TrapDuelServerManager server = TrapDuelServerManager.getInstance();
-
     public static void startSwitchCountdown() {
         server.startSwitchCountdown();
     }
-
 
     public static int getNewSwitchCountdown() {
         return server.getNewSwitchCountdown();
@@ -39,9 +36,7 @@ public class TrapDuelServer extends LoungeBridgeServer {
     public static boolean isCountdownSwitchRunning() {
         return server.isCountdownSwitchRunning();
     }
+    private static final TrapDuelServerManager server = TrapDuelServerManager.getInstance();
 
-    public static void stopWithWin() {
-        server.stopWithWin();
-    }
 
 }
