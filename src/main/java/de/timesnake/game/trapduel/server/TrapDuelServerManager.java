@@ -119,7 +119,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
 
 
     @Override
-    public void prepareGame() {
+    public void onGamePrepare() {
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -129,15 +129,10 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
     }
 
     @Override
-    public void onMapLoad() {
-
-    }
-
-    @Override
     public void onGameStart() {
         this.isGameRunning = true;
         if (this.stopAfterStart) {
-            this.stopWithWin();
+            this.stopGame();
             return;
         }
 
@@ -167,7 +162,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
         p.setInvulnerable(true);
         user.setStatus(Status.User.OUT_GAME);
         if (Server.getInGameUsers().size() <= 1) {
-            this.stopWithWin();
+            this.stopGame();
         }
     }
 
@@ -265,7 +260,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
     }
 
     @Override
-    public void resetGame() {
+    public void onGameReset() {
         Server.getWorldManager().deleteWorld(this.gameWorld, true);
         this.gameWorld = Server.getWorldManager().createWorld(WORLD_NAME);
 
@@ -295,7 +290,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
             ((TrapDuelUser) user).joinSpectator();
 
             if (Server.getInGameUsers().size() <= 1) {
-                this.stopWithWin();
+                this.stopGame();
             }
         } else {
             e.setDeathMessage("");
@@ -394,7 +389,8 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
         Server.broadcastMessage(Plugin.TRAP_DUEL, message);
     }
 
-    public void stopWithWin() {
+    @Override
+    public void onGameStop() {
         if (isGameRunning) {
             isGameRunning = false;
             if (this.peaceTimeTask != null) {
