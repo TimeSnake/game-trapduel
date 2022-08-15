@@ -2,9 +2,9 @@ package de.timesnake.game.trapduel.server;
 
 import de.timesnake.basic.bukkit.util.Server;
 import de.timesnake.basic.bukkit.util.ServerManager;
-import de.timesnake.basic.bukkit.util.chat.ChatColor;
 import de.timesnake.basic.bukkit.util.exceptions.UnsupportedGroupRankException;
 import de.timesnake.basic.bukkit.util.user.User;
+import de.timesnake.basic.bukkit.util.user.event.UserDeathEvent;
 import de.timesnake.basic.bukkit.util.user.scoreboard.Sideboard;
 import de.timesnake.basic.bukkit.util.world.ExLocation;
 import de.timesnake.basic.bukkit.util.world.ExWorld;
@@ -21,7 +21,9 @@ import de.timesnake.game.trapduel.chat.Plugin;
 import de.timesnake.game.trapduel.main.GameTrapDuel;
 import de.timesnake.game.trapduel.user.TrapDuelUser;
 import de.timesnake.library.basic.util.Status;
+import de.timesnake.library.basic.util.chat.ExTextColor;
 import de.timesnake.library.extension.util.chat.Chat;
+import net.kyori.adventure.text.Component;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.block.Biome;
@@ -29,7 +31,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -148,7 +149,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
                 for (User user : Server.getInGameUsers()) {
                     Player p = user.getPlayer();
                     p.setInvulnerable(false);
-                    user.sendPluginMessage(Plugin.TRAP_DUEL, ChatColor.WARNING + "You are now vulnerable!");
+                    user.sendPluginMessage(Plugin.TRAP_DUEL, Component.text("You are now vulnerable!", ExTextColor.WARNING));
                 }
             }
         }.runTaskLaterAsynchronously(GameTrapDuel.getPlugin(), 10 * 20);
@@ -186,18 +187,22 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
                     case 180:
                     case 300:
                     case 600:
-                        broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends in " + ChatColor.VALUE + countdownPeace / 60 + ChatColor.PUBLIC + " minutes!");
+                        broadcastGameMessage(Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
+                                .append(Component.text(countdownPeace / 60 + " min", ExTextColor.VALUE)));
                         break;
                     case 60:
-                        broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends in " + ChatColor.VALUE + "1" + ChatColor.PUBLIC + " minute!");
+                        broadcastGameMessage(Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
+                                .append(Component.text("1 min", ExTextColor.VALUE)));
                         break;
                     case 1:
-                        broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends in " + ChatColor.VALUE + "1" + ChatColor.PUBLIC + " second!");
+                        broadcastGameMessage(Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
+                                .append(Component.text("1 s", ExTextColor.VALUE)));
                         break;
                     case 0:
-                        broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends " + ChatColor.VALUE + "now!");
-                        broadcastGameMessage(ChatColor.WARNING + "The Switch-Time begins!");
-                        broadcastGameMessage(ChatColor.WARNING + "Be attentive and prepared!");
+                        broadcastGameMessage(Component.text("The Peace-Time ends ", ExTextColor.PUBLIC)
+                                .append(Component.text("now!", ExTextColor.WARNING)));
+                        broadcastGameMessage(Component.text("The Switch-Time begins!", ExTextColor.WARNING));
+                        broadcastGameMessage(Component.text("Be attentive and prepared!", ExTextColor.WARNING));
 
                         countdownPeaceRunning = false;
                         this.peaceTimeTask.cancel();
@@ -205,7 +210,8 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
                         break;
                     default:
                         if (countdownPeace <= 10 || countdownPeace == 30) {
-                            broadcastGameMessage(ChatColor.PUBLIC + "The Peace-Time ends in " + ChatColor.VALUE + countdownPeace + ChatColor.PUBLIC + " seconds!");
+                            broadcastGameMessage(Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
+                                    .append(Component.text(countdownPeace + " s", ExTextColor.VALUE)));
                         }
 
                 }
@@ -249,7 +255,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
                     user.getPlayer().setSwimming(isSwimming);
                 }
 
-                broadcastGameMessage(ChatColor.WARNING + "Switched!");
+                broadcastGameMessage(Component.text("Switched!", ExTextColor.WARNING));
                 countdownSwitchRunning = false;
                 countdownPeace = SWITCH_PEACE;
                 startPeaceCountdown();
@@ -279,13 +285,13 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
     }
 
     @EventHandler
-    public void onPlayerDeath(PlayerDeathEvent e) {
-        Player p = e.getEntity();
-        User user = Server.getUser(p);
-        if (Server.getInGameUsers().contains(user)) {
-            e.setDeathMessage("");
-            this.broadcastGameMessage(user.getChatName() + ChatColor.WHITE + " died");
-            Server.runTaskLaterSynchrony(() -> e.getEntity().spigot().respawn(), 2, GameTrapDuel.getPlugin());
+    public void onPlayerDeath(UserDeathEvent e) {
+        User user = e.getUser();
+        if (user.getStatus().equals(Status.User.IN_GAME)) {
+            e.setBroadcastDeathMessage(false);
+            this.broadcastGameMessage(user.getChatNameComponent()
+                    .append(Component.text(" died", ExTextColor.WARNING)));
+            e.setAutoRespawn(true);
 
             ((TrapDuelUser) user).joinSpectator();
 
@@ -293,7 +299,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
                 this.stopGame();
             }
         } else {
-            e.setDeathMessage("");
+            e.setBroadcastDeathMessage(false);
         }
     }
 
@@ -385,7 +391,13 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
     }
 
     @Override
+    @Deprecated
     public void broadcastGameMessage(String message) {
+        Server.broadcastMessage(Plugin.TRAP_DUEL, message);
+    }
+
+    @Override
+    public void broadcastGameMessage(Component message) {
         Server.broadcastMessage(Plugin.TRAP_DUEL, message);
     }
 
@@ -406,7 +418,8 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
             if (Server.getInGameUsers().size() == 1) {
                 User winner = Server.getInGameUsers().iterator().next();
                 this.broadcastGameMessage(Chat.getLongLineSeparator());
-                this.broadcastGameMessage(winner.getChatName() + ChatColor.WHITE + " wins");
+                this.broadcastGameMessage(winner.getChatNameComponent()
+                        .append(Component.text(" wins", ExTextColor.PUBLIC)));
                 this.broadcastGameMessage(Chat.getLongLineSeparator());
 
                 LoungeBridgeServer.closeGame();
