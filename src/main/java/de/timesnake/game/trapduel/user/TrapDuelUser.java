@@ -32,4 +32,10 @@ public class TrapDuelUser extends GameUser {
         this.teleport(location);
     }
 
+    @Override
+    protected void loadGameSettings() {
+        super.loadGameSettings();
+        this.setAllowFlight(true);
+        this.setFlying(true);
+    }
 }
