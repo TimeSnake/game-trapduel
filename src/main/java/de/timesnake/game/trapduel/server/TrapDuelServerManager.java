@@ -1,5 +1,5 @@
 /*
- * game-trapduel.main
+ * workspace.game-trapduel.main
  * Copyright (C) 2022 timesnake
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@ package de.timesnake.game.trapduel.server;
 
 import de.timesnake.basic.bukkit.util.Server;
 import de.timesnake.basic.bukkit.util.ServerManager;
-import de.timesnake.basic.bukkit.util.exceptions.UnsupportedGroupRankException;
+import de.timesnake.basic.bukkit.util.exception.UnsupportedGroupRankException;
 import de.timesnake.basic.bukkit.util.user.User;
 import de.timesnake.basic.bukkit.util.user.event.UserDeathEvent;
 import de.timesnake.basic.bukkit.util.user.scoreboard.Sideboard;
