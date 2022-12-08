@@ -26,9 +26,9 @@ import de.timesnake.basic.bukkit.util.user.event.UserDeathEvent;
 import de.timesnake.basic.bukkit.util.user.scoreboard.Sideboard;
 import de.timesnake.basic.bukkit.util.world.ExLocation;
 import de.timesnake.basic.bukkit.util.world.ExWorld;
-import de.timesnake.basic.game.util.Map;
-import de.timesnake.basic.game.util.Team;
-import de.timesnake.basic.game.util.TmpGame;
+import de.timesnake.basic.game.util.game.Map;
+import de.timesnake.basic.game.util.game.Team;
+import de.timesnake.basic.game.util.game.TmpGame;
 import de.timesnake.basic.loungebridge.util.server.LoungeBridgeServer;
 import de.timesnake.basic.loungebridge.util.server.LoungeBridgeServerManager;
 import de.timesnake.basic.loungebridge.util.user.GameUser;
@@ -457,8 +457,8 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
     }
 
     @Override
-    public Location getSpectatorSpawn() {
+    public ExLocation getSpectatorSpawn() {
         return Server.getInGameUsers().iterator().hasNext() ?
-                Server.getInGameUsers().iterator().next().getLocation() : null;
+                Server.getInGameUsers().iterator().next().getExLocation() : null;
     }
 }
