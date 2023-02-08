@@ -19,14 +19,14 @@ public class TrapDuelUser extends GameUser {
 
     @Override
     public void joinGame() {
+        this.setGameMode(GameMode.SURVIVAL);
+
         this.setAllowFlight(true);
         this.setFlying(true);
         this.setGravity(false);
         this.setFlySpeed(0);
 
-
         this.setInvulnerable(true);
-        this.setGameMode(GameMode.SURVIVAL);
         this.getInventory().clear();
         if (TrapDuelServer.areKitsEnabled()) {
             this.setKitItems();
@@ -38,7 +38,6 @@ public class TrapDuelUser extends GameUser {
 
     @Override
     protected void loadGameSettings() {
-        super.loadGameSettings();
         this.setAllowFlight(true);
         this.setFlying(true);
     }
