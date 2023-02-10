@@ -4,7 +4,7 @@
 
 package de.timesnake.game.trapduel.server;
 
-import de.timesnake.basic.bukkit.util.user.ExItemStack;
+import de.timesnake.basic.bukkit.util.user.inventory.ExItemStack;
 import de.timesnake.basic.loungebridge.util.user.Kit;
 import de.timesnake.library.basic.util.Tuple;
 import org.bukkit.Material;
