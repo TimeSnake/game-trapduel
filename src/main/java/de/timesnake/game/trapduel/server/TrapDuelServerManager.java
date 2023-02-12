@@ -20,13 +20,20 @@ import de.timesnake.basic.loungebridge.util.server.LoungeBridgeServerManager;
 import de.timesnake.basic.loungebridge.util.user.GameUser;
 import de.timesnake.basic.loungebridge.util.user.Kit;
 import de.timesnake.basic.loungebridge.util.user.KitNotDefinedException;
-import de.timesnake.database.util.game.*;
+import de.timesnake.database.util.game.DbGame;
+import de.timesnake.database.util.game.DbKit;
+import de.timesnake.database.util.game.DbMap;
+import de.timesnake.database.util.game.DbTeam;
+import de.timesnake.database.util.game.DbTmpGame;
 import de.timesnake.game.trapduel.chat.Plugin;
 import de.timesnake.game.trapduel.main.GameTrapDuel;
 import de.timesnake.game.trapduel.user.TrapDuelUser;
 import de.timesnake.library.basic.util.Status;
-import de.timesnake.library.basic.util.chat.ExTextColor;
+import de.timesnake.library.chat.ExTextColor;
 import de.timesnake.library.extension.util.chat.Chat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import net.kyori.adventure.text.Component;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -40,16 +47,14 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 
 public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> implements Listener {
 
     public static final String WORLD_NAME = "trapduel";
-    public static final List<Biome> BLOCKED_BIOMES = List.of(Biome.OCEAN, Biome.DEEP_OCEAN, Biome.DEEP_COLD_OCEAN,
-            Biome.COLD_OCEAN, Biome.FROZEN_OCEAN, Biome.DEEP_FROZEN_OCEAN, Biome.DEEP_LUKEWARM_OCEAN,
+    public static final List<Biome> BLOCKED_BIOMES = List.of(Biome.OCEAN, Biome.DEEP_OCEAN,
+            Biome.DEEP_COLD_OCEAN,
+            Biome.COLD_OCEAN, Biome.FROZEN_OCEAN, Biome.DEEP_FROZEN_OCEAN,
+            Biome.DEEP_LUKEWARM_OCEAN,
             Biome.LUKEWARM_OCEAN, Biome.WARM_OCEAN);
     public static final Integer SWITCH_PEACE = 60 * 3;
     public static final Integer PEACE = 60 * 5;
@@ -153,7 +158,8 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
                 for (User user : Server.getInGameUsers()) {
                     Player p = user.getPlayer();
                     p.setInvulnerable(false);
-                    user.sendPluginMessage(Plugin.TRAP_DUEL, Component.text("You are now vulnerable!", ExTextColor.WARNING));
+                    user.sendPluginMessage(Plugin.TRAP_DUEL,
+                            Component.text("You are now vulnerable!", ExTextColor.WARNING));
                 }
             }
         }.runTaskLaterAsynchronously(GameTrapDuel.getPlugin(), 10 * 20);
@@ -191,22 +197,29 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
                     case 180:
                     case 300:
                     case 600:
-                        broadcastGameMessage(Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
-                                .append(Component.text(countdownPeace / 60 + " min", ExTextColor.VALUE)));
+                        broadcastGameMessage(
+                                Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
+                                        .append(Component.text(countdownPeace / 60 + " min",
+                                                ExTextColor.VALUE)));
                         break;
                     case 60:
-                        broadcastGameMessage(Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
-                                .append(Component.text("1 min", ExTextColor.VALUE)));
+                        broadcastGameMessage(
+                                Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
+                                        .append(Component.text("1 min", ExTextColor.VALUE)));
                         break;
                     case 1:
-                        broadcastGameMessage(Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
-                                .append(Component.text("1 s", ExTextColor.VALUE)));
+                        broadcastGameMessage(
+                                Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
+                                        .append(Component.text("1 s", ExTextColor.VALUE)));
                         break;
                     case 0:
-                        broadcastGameMessage(Component.text("The Peace-Time ends ", ExTextColor.PUBLIC)
-                                .append(Component.text("now!", ExTextColor.WARNING)));
-                        broadcastGameMessage(Component.text("The Switch-Time begins!", ExTextColor.WARNING));
-                        broadcastGameMessage(Component.text("Be attentive and prepared!", ExTextColor.WARNING));
+                        broadcastGameMessage(
+                                Component.text("The Peace-Time ends ", ExTextColor.PUBLIC)
+                                        .append(Component.text("now!", ExTextColor.WARNING)));
+                        broadcastGameMessage(
+                                Component.text("The Switch-Time begins!", ExTextColor.WARNING));
+                        broadcastGameMessage(
+                                Component.text("Be attentive and prepared!", ExTextColor.WARNING));
 
                         countdownPeaceRunning = false;
                         this.peaceTimeTask.cancel();
@@ -214,8 +227,10 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
                         break;
                     default:
                         if (countdownPeace <= 10 || countdownPeace == 30) {
-                            broadcastGameMessage(Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
-                                    .append(Component.text(countdownPeace + " s", ExTextColor.VALUE)));
+                            broadcastGameMessage(
+                                    Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
+                                            .append(Component.text(countdownPeace + " s",
+                                                    ExTextColor.VALUE)));
                         }
 
                 }
@@ -323,12 +338,18 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
 
     public double getGaussian() {
         double u = 0, v = 0;
-        while (u == 0) u = Math.random(); //Converting [0,1) to (0,1)
-        while (v == 0) v = Math.random();
+        while (u == 0) {
+            u = Math.random(); //Converting [0,1) to (0,1)
+        }
+        while (v == 0) {
+            v = Math.random();
+        }
         double num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
 
         num = num / 10.0 + 0.5; // Translate to 0 -> 1
-        if (num > 1 || num < 0) num = getGaussian(); // resample between 0 and 1 if out of range
+        if (num > 1 || num < 0) {
+            num = getGaussian(); // resample between 0 and 1 if out of range
+        }
         return num;
     }
 
@@ -397,7 +418,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
     @Override
     @Deprecated
     public void broadcastGameMessage(String message) {
-        Server.broadcastMessage(Plugin.TRAP_DUEL, message);
+        Server.broadcastTDMessage(Plugin.TRAP_DUEL, message);
     }
 
     @Override
