@@ -64,7 +64,6 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
     }
 
     private ArrayList<Location> userSpawnPoints = new ArrayList<>();
-    private boolean isGameRunning = false;
 
     private int countdownPeace;
     private boolean countdownPeaceRunning = false;
@@ -82,6 +81,11 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
     @Override
     public TrapDuelUser loadUser(Player player) {
         return new TrapDuelUser(player);
+    }
+
+    @Override
+    public Sideboard getGameSideboard() {
+        return null;
     }
 
     public void onTrapDuelEnable() {
@@ -140,7 +144,6 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
 
     @Override
     public void onGameStart() {
-        this.isGameRunning = true;
         if (this.stopAfterStart) {
             this.stopGame();
             return;
@@ -193,26 +196,17 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
 
             this.peaceTimeTask = Server.runTaskTimerAsynchrony(() -> {
                 switch (countdownPeace) {
-                    case 120:
-                    case 180:
-                    case 300:
-                    case 600:
-                        broadcastGameMessage(
-                                Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
-                                        .append(Component.text(countdownPeace / 60 + " min",
-                                                ExTextColor.VALUE)));
-                        break;
-                    case 60:
-                        broadcastGameMessage(
-                                Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
-                                        .append(Component.text("1 min", ExTextColor.VALUE)));
-                        break;
-                    case 1:
-                        broadcastGameMessage(
-                                Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
-                                        .append(Component.text("1 s", ExTextColor.VALUE)));
-                        break;
-                    case 0:
+                    case 120, 180, 300, 600 -> broadcastGameMessage(
+                            Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
+                                    .append(Component.text(countdownPeace / 60 + " min",
+                                            ExTextColor.VALUE)));
+                    case 60 -> broadcastGameMessage(
+                            Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
+                                    .append(Component.text("1 min", ExTextColor.VALUE)));
+                    case 1 -> broadcastGameMessage(
+                            Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
+                                    .append(Component.text("1 s", ExTextColor.VALUE)));
+                    case 0 -> {
                         broadcastGameMessage(
                                 Component.text("The Peace-Time ends ", ExTextColor.PUBLIC)
                                         .append(Component.text("now!", ExTextColor.WARNING)));
@@ -220,19 +214,18 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
                                 Component.text("The Switch-Time begins!", ExTextColor.WARNING));
                         broadcastGameMessage(
                                 Component.text("Be attentive and prepared!", ExTextColor.WARNING));
-
                         countdownPeaceRunning = false;
                         this.peaceTimeTask.cancel();
                         startSwitchCountdown();
-                        break;
-                    default:
+                    }
+                    default -> {
                         if (countdownPeace <= 10 || countdownPeace == 30) {
                             broadcastGameMessage(
                                     Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
                                             .append(Component.text(countdownPeace + " s",
                                                     ExTextColor.VALUE)));
                         }
-
+                    }
                 }
                 countdownPeace--;
             }, 0, 20, GameTrapDuel.getPlugin());
@@ -416,39 +409,26 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
     }
 
     @Override
-    @Deprecated
-    public void broadcastGameMessage(String message) {
-        Server.broadcastTDMessage(Plugin.TRAP_DUEL, message);
-    }
-
-    @Override
-    public void broadcastGameMessage(Component message) {
-        Server.broadcastMessage(Plugin.TRAP_DUEL, message);
-    }
-
-    @Override
     public void onGameStop() {
-        if (isGameRunning) {
-            isGameRunning = false;
-            if (this.peaceTimeTask != null) {
-                this.peaceTimeTask.cancel();
-            }
-            if (this.switchTask != null) {
-                this.switchTask.cancel();
-            }
-            for (User user : Server.getInGameUsers()) {
-                user.getPlayer().setInvulnerable(true);
-                user.setGameMode(GameMode.ADVENTURE);
-            }
-            if (Server.getInGameUsers().size() == 1) {
-                User winner = Server.getInGameUsers().iterator().next();
-                this.broadcastGameMessage(Chat.getLongLineSeparator());
-                this.broadcastGameMessage(winner.getChatNameComponent()
-                        .append(Component.text(" wins", ExTextColor.PUBLIC)));
-                this.broadcastGameMessage(Chat.getLongLineSeparator());
+        if (this.peaceTimeTask != null) {
+            this.peaceTimeTask.cancel();
+        }
 
-                LoungeBridgeServer.closeGame();
-            }
+        if (this.switchTask != null) {
+            this.switchTask.cancel();
+        }
+        for (User user : Server.getInGameUsers()) {
+            user.getPlayer().setInvulnerable(true);
+            user.setGameMode(GameMode.ADVENTURE);
+        }
+        if (Server.getInGameUsers().size() == 1) {
+            User winner = Server.getInGameUsers().iterator().next();
+            this.broadcastGameMessage(Chat.getLongLineSeparator());
+            this.broadcastGameMessage(winner.getChatNameComponent()
+                    .append(Component.text(" wins", ExTextColor.PUBLIC)));
+            this.broadcastGameMessage(Chat.getLongLineSeparator());
+
+            LoungeBridgeServer.closeGame();
         }
     }
 
@@ -456,11 +436,6 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
     @Override
     public Plugin getGamePlugin() {
         return Plugin.TRAP_DUEL;
-    }
-
-    @Override
-    public boolean isGameRunning() {
-        return this.isGameRunning;
     }
 
     @Override
