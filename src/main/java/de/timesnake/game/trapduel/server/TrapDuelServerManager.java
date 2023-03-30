@@ -28,6 +28,7 @@ import de.timesnake.database.util.game.DbTmpGame;
 import de.timesnake.game.trapduel.chat.Plugin;
 import de.timesnake.game.trapduel.main.GameTrapDuel;
 import de.timesnake.game.trapduel.user.TrapDuelUser;
+import de.timesnake.library.basic.util.Loggers;
 import de.timesnake.library.basic.util.Status;
 import de.timesnake.library.chat.ExTextColor;
 import de.timesnake.library.extension.util.chat.Chat;
@@ -100,7 +101,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
             Server.getWorldManager().deleteWorld(this.gameWorld, true);
         }
         this.gameWorld = Server.getWorldManager().createWorld(WORLD_NAME);
-        Server.printText(Plugin.TRAP_DUEL, "Game world created");
+        Loggers.GAME.info("Game world created");
 
         this.generateUserSpawnPoints();
     }
@@ -288,7 +289,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
         countdownSwitchRunning = false;
         this.stopAfterStart = false;
 
-        Server.printText(Plugin.TRAP_DUEL, "Reset successfully");
+        Loggers.GAME.info("Reset successfully");
     }
 
     @Override
@@ -386,7 +387,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
                 spawnPoint += 2000;
             } while (BLOCKED_BIOMES.contains(loc.getBlock().getBiome()));
             userSpawnPoints.add(loc);
-            Server.printText(Plugin.TRAP_DUEL, "Added spawn: " + spawnPoint);
+            Loggers.GAME.info("Added spawn: " + spawnPoint);
         }
     }
 
