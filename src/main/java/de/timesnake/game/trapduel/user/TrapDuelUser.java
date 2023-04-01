@@ -18,7 +18,9 @@ public class TrapDuelUser extends GameUser {
     }
 
     @Override
-    public void joinGame() {
+    public void onGameJoin() {
+        super.onGameJoin();
+
         this.setGameMode(GameMode.SURVIVAL);
 
         this.setAllowFlight(true);
