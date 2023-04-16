@@ -14,14 +14,12 @@ import de.timesnake.basic.bukkit.util.world.ExLocation;
 import de.timesnake.basic.bukkit.util.world.ExWorld;
 import de.timesnake.basic.game.util.game.Map;
 import de.timesnake.basic.game.util.game.Team;
-import de.timesnake.basic.game.util.game.TmpGame;
+import de.timesnake.basic.loungebridge.util.game.TmpGame;
 import de.timesnake.basic.loungebridge.util.server.LoungeBridgeServer;
 import de.timesnake.basic.loungebridge.util.server.LoungeBridgeServerManager;
 import de.timesnake.basic.loungebridge.util.user.GameUser;
-import de.timesnake.basic.loungebridge.util.user.Kit;
-import de.timesnake.basic.loungebridge.util.user.KitNotDefinedException;
+import de.timesnake.basic.loungebridge.util.user.KitManager;
 import de.timesnake.database.util.game.DbGame;
-import de.timesnake.database.util.game.DbKit;
 import de.timesnake.database.util.game.DbMap;
 import de.timesnake.database.util.game.DbTeam;
 import de.timesnake.database.util.game.DbTmpGame;
@@ -120,18 +118,11 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
             }
 
             @Override
-            public TrapDuelKit loadKit(DbKit dbKit) {
-                int dbId = dbKit.getId();
-                for (TrapDuelKit kit : TrapDuelKit.KITS) {
-                    if (kit.getId().equals(dbId)) {
-                        return kit;
-                    }
-                }
-                return null;
+            public KitManager<?> loadKitManager() {
+                return new TrapDuelKitManager();
             }
         };
     }
-
 
     @Override
     public void onGamePrepare() {
@@ -316,16 +307,6 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
         }
     }
 
-    @Override
-    public Kit getKit(int index) throws KitNotDefinedException {
-        for (TrapDuelKit kit : TrapDuelKit.KITS) {
-            if (kit.getId().equals(index)) {
-                return kit;
-            }
-        }
-        throw new KitNotDefinedException(index);
-    }
-
     public int getNewSwitchCountdown() {
         return (int) (50 * getGaussian() * timeMultiplier + 10);
     }
@@ -368,12 +349,6 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
 
         }
     }
-
-    @Override
-    public Kit[] getKits() {
-        return TrapDuelKit.KITS;
-    }
-
 
     public void generateUserSpawnPoints() {
         userSpawnPoints = new ArrayList<>();

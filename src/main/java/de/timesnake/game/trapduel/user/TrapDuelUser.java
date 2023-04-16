@@ -31,7 +31,7 @@ public class TrapDuelUser extends GameUser {
         this.setInvulnerable(true);
         this.getInventory().clear();
         if (TrapDuelServer.areKitsEnabled()) {
-            this.setKitItems();
+            this.applyKit();
         }
         Location location = TrapDuelServer.getUserSpawnPoint();
         location.getWorld().loadChunk(location.getChunk());
