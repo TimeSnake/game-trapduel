@@ -6,22 +6,17 @@ package de.timesnake.game.trapduel.server;
 
 import de.timesnake.basic.bukkit.util.Server;
 import de.timesnake.basic.bukkit.util.ServerManager;
-import de.timesnake.basic.bukkit.util.exception.UnsupportedGroupRankException;
 import de.timesnake.basic.bukkit.util.user.User;
 import de.timesnake.basic.bukkit.util.user.event.UserDeathEvent;
 import de.timesnake.basic.bukkit.util.user.scoreboard.Sideboard;
 import de.timesnake.basic.bukkit.util.world.ExLocation;
 import de.timesnake.basic.bukkit.util.world.ExWorld;
-import de.timesnake.basic.game.util.game.Map;
-import de.timesnake.basic.game.util.game.Team;
 import de.timesnake.basic.loungebridge.util.game.TmpGame;
 import de.timesnake.basic.loungebridge.util.server.LoungeBridgeServer;
 import de.timesnake.basic.loungebridge.util.server.LoungeBridgeServerManager;
 import de.timesnake.basic.loungebridge.util.user.GameUser;
 import de.timesnake.basic.loungebridge.util.user.KitManager;
 import de.timesnake.database.util.game.DbGame;
-import de.timesnake.database.util.game.DbMap;
-import de.timesnake.database.util.game.DbTeam;
 import de.timesnake.database.util.game.DbTmpGame;
 import de.timesnake.game.trapduel.chat.Plugin;
 import de.timesnake.game.trapduel.main.GameTrapDuel;
@@ -108,16 +103,6 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
     protected TmpGame loadGame(DbGame dbGame, boolean loadWorlds) {
         return new TmpGame((DbTmpGame) dbGame, true) {
             @Override
-            public Team loadTeam(DbTeam team) throws UnsupportedGroupRankException {
-                return new Team(team);
-            }
-
-            @Override
-            public Map loadMap(DbMap dbMap, boolean loadWorld) {
-                return new Map(dbMap, loadWorld);
-            }
-
-            @Override
             public KitManager<?> loadKitManager() {
                 return new TrapDuelKitManager();
             }
@@ -125,13 +110,11 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
     }
 
     @Override
-    public void onGamePrepare() {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                gameWorld.setTime(1000);
-            }
-        }.runTask(GameTrapDuel.getPlugin());
+    public void onWorldLoad() {
+        Server.getWorldManager().deleteWorld(this.gameWorld, true);
+        this.gameWorld = Server.getWorldManager().createWorld(WORLD_NAME);
+        this.generateUserSpawnPoints();
+        gameWorld.setTime(1000);
     }
 
     @Override
@@ -271,10 +254,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
 
     @Override
     public void onGameReset() {
-        Server.getWorldManager().deleteWorld(this.gameWorld, true);
-        this.gameWorld = Server.getWorldManager().createWorld(WORLD_NAME);
-
-        this.generateUserSpawnPoints();
+        this.loadWorld();
 
         countdownPeaceRunning = false;
         countdownSwitchRunning = false;
