@@ -15,31 +15,31 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class GameTrapDuel extends JavaPlugin {
 
-    public static GameTrapDuel plugin;
+  public static GameTrapDuel plugin;
 
-    @Override
-    public void onLoad() {
-        ServerManager.setInstance(new TrapDuelServerManager());
+  @Override
+  public void onLoad() {
+    ServerManager.setInstance(new TrapDuelServerManager());
+  }
+
+  @Override
+  public void onEnable() {
+
+    if (Server.getTask().startsWith("trapduel")) {
+      Loggers.GAME.info("Loading TrapDuel ...");
+      GameTrapDuel.plugin = this;
+
+      PluginManager pm = Bukkit.getPluginManager();
+      pm.registerEvents(TrapDuelServerManager.getInstance(), this);
+
+      TrapDuelServerManager.getInstance().onTrapDuelEnable();
+
+      Loggers.GAME.info("TrapDuel loaded successfully");
     }
+  }
 
-    @Override
-    public void onEnable() {
-
-        if (Server.getTask().startsWith("trapduel")) {
-            Loggers.GAME.info("Loading TrapDuel ...");
-            GameTrapDuel.plugin = this;
-
-            PluginManager pm = Bukkit.getPluginManager();
-            pm.registerEvents(TrapDuelServerManager.getInstance(), this);
-
-            TrapDuelServerManager.getInstance().onTrapDuelEnable();
-
-            Loggers.GAME.info("TrapDuel loaded successfully");
-        }
-    }
-
-    public static Plugin getPlugin() {
-        return plugin;
-    }
+  public static Plugin getPlugin() {
+    return plugin;
+  }
 
 }

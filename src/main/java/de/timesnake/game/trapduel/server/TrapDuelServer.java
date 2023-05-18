@@ -9,39 +9,39 @@ import org.bukkit.Location;
 
 public class TrapDuelServer extends LoungeBridgeServer {
 
-    public static void startSwitchCountdown() {
-        server.startSwitchCountdown();
-    }
+  public static void startSwitchCountdown() {
+    server.startSwitchCountdown();
+  }
 
-    public static int getNewSwitchCountdown() {
-        return server.getNewSwitchCountdown();
-    }
+  public static int getNewSwitchCountdown() {
+    return server.getNewSwitchCountdown();
+  }
 
-    public static double getGaussian() {
-        return server.getGaussian();
-    }
+  public static double getGaussian() {
+    return server.getGaussian();
+  }
 
-    public static void generateUserSpawnPoints() {
-        server.generateUserSpawnPoints();
-    }
+  public static void generateUserSpawnPoints() {
+    server.generateUserSpawnPoints();
+  }
 
-    public static Location getUserSpawnPoint() {
-        return server.getUserSpawnPoint();
-    }
+  public static Location getUserSpawnPoint() {
+    return server.getUserSpawnPoint();
+  }
 
-    public static int getCountdownPeace() {
-        return server.getCountdownPeace();
-    }
+  public static int getCountdownPeace() {
+    return server.getCountdownPeace();
+  }
 
-    public static boolean isCountdownPeaceRunning() {
-        return server.isCountdownPeaceRunning();
-    }
+  public static boolean isCountdownPeaceRunning() {
+    return server.isCountdownPeaceRunning();
+  }
 
-    public static boolean isCountdownSwitchRunning() {
-        return server.isCountdownSwitchRunning();
-    }
+  public static boolean isCountdownSwitchRunning() {
+    return server.isCountdownSwitchRunning();
+  }
 
-    private static final TrapDuelServerManager server = TrapDuelServerManager.getInstance();
+  private static final TrapDuelServerManager server = TrapDuelServerManager.getInstance();
 
 
 }
