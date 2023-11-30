@@ -7,7 +7,7 @@ plugins {
 }
 
 group = project.group
-version = '0.3'
+version = '0.3.1'
 archivesBaseName = 'game-trapduel'
 var projectId = 18
 
