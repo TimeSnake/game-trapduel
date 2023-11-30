@@ -4,6 +4,7 @@
 
 package de.timesnake.game.trapduel.server;
 
+import de.timesnake.basic.bukkit.core.server.MathHelper;
 import de.timesnake.basic.bukkit.util.Server;
 import de.timesnake.basic.bukkit.util.ServerManager;
 import de.timesnake.basic.bukkit.util.user.User;
@@ -12,6 +13,7 @@ import de.timesnake.basic.bukkit.util.user.scoreboard.Sideboard;
 import de.timesnake.basic.bukkit.util.world.ExLocation;
 import de.timesnake.basic.bukkit.util.world.ExWorld;
 import de.timesnake.basic.loungebridge.util.game.TmpGame;
+import de.timesnake.basic.loungebridge.util.server.EndMessage;
 import de.timesnake.basic.loungebridge.util.server.LoungeBridgeServer;
 import de.timesnake.basic.loungebridge.util.server.LoungeBridgeServerManager;
 import de.timesnake.basic.loungebridge.util.user.GameUser;
@@ -24,22 +26,20 @@ import de.timesnake.game.trapduel.user.TrapDuelUser;
 import de.timesnake.library.basic.util.Loggers;
 import de.timesnake.library.basic.util.Status;
 import de.timesnake.library.chat.ExTextColor;
-import de.timesnake.library.extension.util.chat.Chat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import net.kyori.adventure.text.Component;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> implements Listener {
@@ -156,11 +156,6 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
   }
 
   @Override
-  public void onGameUserQuitBeforeStart(GameUser user) {
-    this.stopAfterStart = true;
-  }
-
-  @Override
   public boolean isRejoiningAllowed() {
     return false;
   }
@@ -182,8 +177,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
               Component.text("The Peace-Time ends in ", ExTextColor.PUBLIC)
                   .append(Component.text("1 s", ExTextColor.VALUE)));
           case 0 -> {
-            broadcastGameMessage(
-                Component.text("The Peace-Time ends ", ExTextColor.PUBLIC)
+            broadcastGameMessage(Component.text("The Peace-Time ends ", ExTextColor.PUBLIC)
                     .append(Component.text("now!", ExTextColor.WARNING)));
             broadcastGameMessage(
                 Component.text("The Switch-Time begins!", ExTextColor.WARNING));
@@ -264,8 +258,8 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
   }
 
   @Override
-  public Sideboard getSpectatorSideboard() {
-    return null;
+  public boolean checkGameEnd() {
+    return this.getUsers().size() <= 1;
   }
 
   @EventHandler
@@ -288,45 +282,13 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
   }
 
   public int getNewSwitchCountdown() {
-    return (int) (50 * getGaussian() * timeMultiplier + 10);
-  }
-
-  public double getGaussian() {
-    double u = 0, v = 0;
-    while (u == 0) {
-      u = Math.random(); //Converting [0,1) to (0,1)
-    }
-    while (v == 0) {
-      v = Math.random();
-    }
-    double num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-
-    num = num / 10.0 + 0.5; // Translate to 0 -> 1
-    if (num > 1 || num < 0) {
-      num = getGaussian(); // resample between 0 and 1 if out of range
-    }
-    return num;
-  }
-
-
-  @EventHandler
-  public void onPlayerRespawn(PlayerRespawnEvent e) {
-    User user = Server.getUser(e.getPlayer());
-
-    if (user == null) {
-      return;
-    }
-
-    if (user.getStatus().equals(Status.User.OUT_GAME)) {
-      e.setRespawnLocation(user.getLocation());
-    }
+    return (int) (50 * MathHelper.getGaussian() * timeMultiplier + 10);
   }
 
   @EventHandler
   public void onEntityDamageByEntity(EntityDamageByEntityEvent e) {
     if (e.getEntity() instanceof Player && e.getDamager() instanceof Player) {
       e.setCancelled(true);
-
     }
   }
 
@@ -373,19 +335,12 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
     if (this.switchTask != null) {
       this.switchTask.cancel();
     }
-    for (User user : Server.getInGameUsers()) {
-      user.getPlayer().setInvulnerable(true);
-      user.setGameMode(GameMode.ADVENTURE);
-    }
-    if (Server.getInGameUsers().size() == 1) {
-      User winner = Server.getInGameUsers().iterator().next();
-      this.broadcastGameMessage(Chat.getLongLineSeparator());
-      this.broadcastGameMessage(winner.getChatNameComponent()
-          .append(Component.text(" wins", ExTextColor.PUBLIC)));
-      this.broadcastGameMessage(Chat.getLongLineSeparator());
 
-      LoungeBridgeServer.closeGame();
-    }
+    new EndMessage()
+        .winner(Server.getInGameUsers().stream().findAny().orElse(null))
+        .send();
+
+    LoungeBridgeServer.closeGame();
   }
 
 
@@ -396,7 +351,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
 
   @Override
   public ExLocation getSpectatorSpawn() {
-    return Server.getInGameUsers().iterator().hasNext() ?
-        Server.getInGameUsers().iterator().next().getExLocation() : null;
+    return Server.getInGameUsers().iterator().hasNext() ? Server.getInGameUsers().iterator().next().getExLocation() :
+        null;
   }
 }

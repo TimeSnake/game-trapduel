@@ -4,11 +4,13 @@
 
 package de.timesnake.game.trapduel.user;
 
+import de.timesnake.basic.bukkit.util.world.ExLocation;
 import de.timesnake.basic.loungebridge.util.user.GameUser;
 import de.timesnake.game.trapduel.server.TrapDuelServer;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
 public class TrapDuelUser extends GameUser {
 
@@ -42,5 +44,10 @@ public class TrapDuelUser extends GameUser {
   protected void loadGameSettings() {
     this.setAllowFlight(true);
     this.setFlying(true);
+  }
+
+  @Override
+  public @Nullable ExLocation onGameRespawn() {
+    return this.getExLocation();
   }
 }
