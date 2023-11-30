@@ -41,12 +41,6 @@ public class TrapDuelUser extends GameUser {
   }
 
   @Override
-  protected void loadGameSettings() {
-    this.setAllowFlight(true);
-    this.setFlying(true);
-  }
-
-  @Override
   public @Nullable ExLocation onGameRespawn() {
     return this.getExLocation();
   }
