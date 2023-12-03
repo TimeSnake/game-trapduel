@@ -41,7 +41,7 @@ public class TrapDuelUser extends GameUser {
   }
 
   @Override
-  public @Nullable ExLocation onGameRespawn() {
+  public @Nullable ExLocation getRespawnLocation() {
     return this.getExLocation();
   }
 }
