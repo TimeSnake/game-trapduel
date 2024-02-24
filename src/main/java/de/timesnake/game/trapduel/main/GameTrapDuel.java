@@ -7,7 +7,6 @@ package de.timesnake.game.trapduel.main;
 import de.timesnake.basic.bukkit.util.Server;
 import de.timesnake.basic.bukkit.util.ServerManager;
 import de.timesnake.game.trapduel.server.TrapDuelServerManager;
-import de.timesnake.library.basic.util.Loggers;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -26,15 +25,12 @@ public class GameTrapDuel extends JavaPlugin {
   public void onEnable() {
 
     if (Server.getTask().startsWith("trapduel")) {
-      Loggers.GAME.info("Loading TrapDuel ...");
       GameTrapDuel.plugin = this;
 
       PluginManager pm = Bukkit.getPluginManager();
       pm.registerEvents(TrapDuelServerManager.getInstance(), this);
 
       TrapDuelServerManager.getInstance().onTrapDuelEnable();
-
-      Loggers.GAME.info("TrapDuel loaded successfully");
     }
   }
 
