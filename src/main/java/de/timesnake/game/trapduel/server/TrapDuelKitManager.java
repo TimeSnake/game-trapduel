@@ -6,13 +6,13 @@ package de.timesnake.game.trapduel.server;
 
 import de.timesnake.basic.bukkit.util.user.inventory.ExItemStack;
 import de.timesnake.basic.loungebridge.util.user.Kit;
-import de.timesnake.basic.loungebridge.util.user.Kit.Builder;
 import de.timesnake.basic.loungebridge.util.user.KitManager;
-import java.util.Collection;
-import java.util.List;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
+
+import java.util.Collection;
+import java.util.List;
 
 public class TrapDuelKitManager extends KitManager<Kit> {
 
@@ -157,5 +157,9 @@ public class TrapDuelKitManager extends KitManager<Kit> {
   @Override
   public Collection<Kit> getKits() {
     return KITS;
+  }
+
+  public static class Builder extends Kit.Builder<Builder> {
+
   }
 }

@@ -23,7 +23,6 @@ import de.timesnake.database.util.game.DbTmpGame;
 import de.timesnake.game.trapduel.chat.Plugin;
 import de.timesnake.game.trapduel.main.GameTrapDuel;
 import de.timesnake.game.trapduel.user.TrapDuelUser;
-import de.timesnake.library.basic.util.Loggers;
 import de.timesnake.library.basic.util.Status;
 import de.timesnake.library.chat.ExTextColor;
 import net.kyori.adventure.text.Component;
@@ -94,7 +93,6 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
       Server.getWorldManager().deleteWorld(this.gameWorld, true);
     }
     this.gameWorld = Server.getWorldManager().createWorld(WORLD_NAME);
-    Loggers.GAME.info("Game world created");
 
     this.generateUserSpawnPoints();
   }
@@ -178,7 +176,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
                   .append(Component.text("1 s", ExTextColor.VALUE)));
           case 0 -> {
             broadcastGameMessage(Component.text("The Peace-Time ends ", ExTextColor.PUBLIC)
-                    .append(Component.text("now!", ExTextColor.WARNING)));
+                .append(Component.text("now!", ExTextColor.WARNING)));
             broadcastGameMessage(
                 Component.text("The Switch-Time begins!", ExTextColor.WARNING));
             broadcastGameMessage(
@@ -253,8 +251,6 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
     countdownPeaceRunning = false;
     countdownSwitchRunning = false;
     this.stopAfterStart = false;
-
-    Loggers.GAME.info("Reset successfully");
   }
 
   @Override
@@ -304,7 +300,6 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
         spawnPoint += 2000;
       } while (BLOCKED_BIOMES.contains(loc.getBlock().getBiome()));
       userSpawnPoints.add(loc);
-      Loggers.GAME.info("Added spawn: " + spawnPoint);
     }
   }
 
