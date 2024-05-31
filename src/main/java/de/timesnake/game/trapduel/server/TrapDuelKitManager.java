@@ -64,9 +64,9 @@ public class TrapDuelKitManager extends KitManager<Kit> {
           "§7  Aqua Affinity", "§7  Depth Strider 3", "§7  Respiration 3",
           "§f 5 Guardian Spawn Egg", "§f 32 Apple")
       .addItems(new ExItemStack(Material.LEATHER_HELMET).unbreakable()
-              .addExEnchantment(Enchantment.OXYGEN, 3)
+              .addExEnchantment(Enchantment.RESPIRATION, 3)
               .addExEnchantment(Enchantment.DEPTH_STRIDER, 3)
-              .addExEnchantment(Enchantment.WATER_WORKER, 1),
+              .addExEnchantment(Enchantment.AQUA_AFFINITY, 1),
           new ItemStack(Material.GUARDIAN_SPAWN_EGG, 5),
           new ItemStack(Material.APPLE, 32))
       .build();
@@ -78,7 +78,7 @@ public class TrapDuelKitManager extends KitManager<Kit> {
       .addDescription("", "§6§lItems:", "§f 1 Leather Leggings", "§7  Unbreakable",
           "§7  Fire Protection 3", "§f 2 Lava Bucket", "§f 32 Apple")
       .addItems(new ExItemStack(Material.LEATHER_LEGGINGS).unbreakable()
-              .addExEnchantment(Enchantment.PROTECTION_FIRE, 3),
+              .addExEnchantment(Enchantment.FIRE_PROTECTION, 3),
           new ItemStack(Material.LAVA_BUCKET, 1),
           new ItemStack(Material.LAVA_BUCKET, 1),
           new ItemStack(Material.APPLE, 32))
