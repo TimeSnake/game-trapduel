@@ -3,5 +3,5 @@ version: 0.4.2
 name: game-trapduel
 author: timesnake
 depend: [ basic-lounge-bridge ]
-api-version: 1.13
+api-version: 1.21
 
