@@ -20,11 +20,11 @@ import de.timesnake.basic.loungebridge.util.user.GameUser;
 import de.timesnake.basic.loungebridge.util.user.KitManager;
 import de.timesnake.database.util.game.DbGame;
 import de.timesnake.database.util.game.DbTmpGame;
-import de.timesnake.game.trapduel.chat.Plugin;
 import de.timesnake.game.trapduel.main.GameTrapDuel;
 import de.timesnake.game.trapduel.user.TrapDuelUser;
 import de.timesnake.library.basic.util.Status;
 import de.timesnake.library.chat.ExTextColor;
+import de.timesnake.library.chat.Plugin;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.block.Biome;
@@ -134,7 +134,7 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
         for (User user : Server.getInGameUsers()) {
           Player p = user.getPlayer();
           p.setInvulnerable(false);
-          user.sendPluginMessage(Plugin.TRAP_DUEL,
+          user.sendPluginMessage(Plugin.GAME,
               Component.text("You are now vulnerable!", ExTextColor.WARNING));
         }
       }
@@ -336,12 +336,6 @@ public class TrapDuelServerManager extends LoungeBridgeServerManager<TmpGame> im
         .send();
 
     LoungeBridgeServer.closeGame();
-  }
-
-
-  @Override
-  public Plugin getGamePlugin() {
-    return Plugin.TRAP_DUEL;
   }
 
   @Override
